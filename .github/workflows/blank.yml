@@ -3,29 +3,34 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      - name: Deploy to GitHub Pages
+        run: |
+          mkdir -p .deploy
+          cp index.html .deploy/index.html
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-    - name: Install dependencies
-      run: npm install
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
-    - name: Build
-      run: npm run build
-
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GH_TOKEN }}
-        publish_dir: ./dist
+      - name: Push to GitHub Pages
+        run: |
+          cd .deploy
+          git init
+          git add .
+          git commit -m "Deploy to GitHub Pages"
+          git branch -m gh-pages
+          git remote add origin https://github.com/${{ github.repository }}.git
+          git push -f origin gh-pages
